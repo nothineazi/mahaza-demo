@@ -21,6 +21,8 @@ npm test                          # tests unitaires de la logique (vitest)
 npm run lint
 ```
 
+`npm start` lance `next start` (Next.js affiche un avertissement lié à `output: "standalone"`, sans conséquence : il sert bien `public/` et `.next/static`). L'image Docker, elle, lance `node server.js`.
+
 `NEXT_PUBLIC_THEME` vaut `mahaza` (défaut) ou `stlouis`. Elle est lue **au build** :
 changer de marque impose de rebuilder (voir « Déploiement »).
 
