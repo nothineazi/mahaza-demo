@@ -1,4 +1,4 @@
-import type { Practitioner, Room, SeedBooking, Service, Site } from "./types";
+import type { Practitioner, PremiumConfig, Room, SeedBooking, Service, Site } from "./types";
 
 /**
  * Données Mahaza Beauty.
@@ -255,3 +255,39 @@ export const mahazaSeedBookings: SeedBooking[] = mahazaSites.flatMap((site) => {
     };
   });
 });
+
+// ---------------------------------------------------------------------------
+// Réglages premium (FICTIFS : à confirmer par Mahaza)
+// ---------------------------------------------------------------------------
+
+/**
+ * Toutes les valeurs ci-dessous sont des PLACEHOLDERS de démonstration, à valider avec Mahaza :
+ * délais d'acompte, limites, règles de fidélité et barème du CA estimé.
+ * `fictivePriceByCategory` n'alimente que le « CA estimé » du back-office (jamais affiché côté client) ;
+ * `Service.price`, s'il est renseigné un jour, est prioritaire.
+ */
+export const mahazaPremium: PremiumConfig = {
+  depositHoldMin: 30,
+  maxCartItems: 5,
+  seedHoldMin: 360,
+  loyalty: {
+    pointsPerVisit: 10,
+    tiers: [
+      { label: "Découverte", minPoints: 0 },
+      { label: "Argent", minPoints: 30 },
+      { label: "Or", minPoints: 60 },
+    ],
+  },
+  fictivePriceByCategory: {
+    "Beauté des mains et des pieds": 15000,
+    "Soin de visage": 25000,
+    "Soin du corps": 30000,
+    "Épilation": 10000,
+    "Beauté du regard": 20000,
+    "Coiffure femme": 20000,
+    "Soin pour homme": 12000,
+    "Soin pour enfant (garçon et fille)": 8000,
+  },
+  // La fourchette 20 000 – 100 000 FCFA est celle du site actuel ; le pas est FICTIF.
+  giftCard: { minAmount: 20000, maxAmount: 100000, stepAmount: 5000, messageMax: 200 },
+};
