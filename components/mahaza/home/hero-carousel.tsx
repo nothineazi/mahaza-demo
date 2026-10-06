@@ -5,11 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { theme } from "@/theme.config";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 
 const INTERVAL_MS = 6000;
 
-/** Hero : alternance des visuels (hero-1 / hero-2), sans lecture automatique si l'utilisateur préfère moins d'animations. */
+/** Hero : alternance des visuels, sans lecture automatique si l'utilisateur préfère moins d'animations. */
 export function HeroCarousel() {
   const home = theme.home;
   const [index, setIndex] = useState(0);
@@ -37,16 +37,21 @@ export function HeroCarousel() {
           className={cn("-z-20 object-cover transition-opacity duration-1000 motion-reduce:transition-none", i === index ? "opacity-100" : "opacity-0")}
         />
       ))}
-      {/* Voile sombre : garantit un contraste AA du texte blanc quel que soit le visuel. */}
-      <div className="absolute inset-0 -z-10 bg-foreground/75" aria-hidden />
+      {/* Voile sombre : garantit un contraste AA du texte clair quel que soit le visuel. */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-foreground/90 via-foreground/75 to-foreground/60" aria-hidden />
 
-      <div className="mx-auto flex min-h-[460px] max-w-5xl flex-col items-start justify-center gap-5 px-4 py-14 text-background sm:min-h-[520px]">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">{home.heroKicker}</p>
-        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">{home.heroTitle}</h1>
-        <p className="max-w-xl text-base">{theme.description}</p>
-        <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-          <Link href="/reserver">Prendre rendez-vous</Link>
-        </Button>
+      <div className="mx-auto flex min-h-[560px] max-w-6xl flex-col items-start justify-center gap-7 px-4 py-20 text-background sm:min-h-[640px] sm:px-6">
+        <p className="lux-fade-up text-xs font-semibold uppercase tracking-[0.32em] text-accent sm:text-sm">{home.heroKicker}</p>
+        <h1 className="lux-fade-up max-w-3xl font-heading text-5xl font-medium leading-[1.05] [animation-delay:80ms] sm:text-7xl">{home.heroTitle}</h1>
+        <p className="lux-fade-up max-w-xl text-lg leading-relaxed text-background/90 [animation-delay:160ms]">{theme.description}</p>
+        <div className="lux-fade-up flex flex-wrap gap-3 [animation-delay:240ms]">
+          <Button asChild variant="gold" size="lg">
+            <Link href="/reserver">Prendre rendez-vous</Link>
+          </Button>
+          <Button asChild variant="outline-light" size="lg">
+            <Link href="/#soins">Découvrir nos soins</Link>
+          </Button>
+        </div>
       </div>
 
       {count > 1 && (
@@ -58,9 +63,9 @@ export function HeroCarousel() {
               onClick={() => setIndex(i)}
               aria-label={`Afficher le visuel ${i + 1} sur ${count}`}
               aria-current={i === index}
-              className="flex size-8 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="flex size-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
-              <span className={cn("block size-2.5 rounded-full border border-background", i === index ? "bg-background" : "bg-transparent")} />
+              <span className={cn("block size-2.5 rounded-full border border-background transition-colors", i === index ? "bg-background" : "bg-transparent")} />
             </button>
           ))}
         </div>

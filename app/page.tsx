@@ -6,16 +6,18 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MahazaHome } from "@/components/home/mahaza-home";
+import { MahazaHome } from "@/components/mahaza/home/mahaza-home";
+import { MahazaHeader } from "@/components/mahaza/site-header";
+import { MahazaFooter } from "@/components/mahaza/site-footer";
 
 export default function HomePage() {
   // Marque avec contenu éditorial (Mahaza) : accueil dédié ; sinon accueil historique (St Louis).
   if (theme.home) {
     return (
       <>
-        <SiteHeader />
+        <MahazaHeader />
         <MahazaHome />
-        <SiteFooter />
+        <MahazaFooter />
       </>
     );
   }

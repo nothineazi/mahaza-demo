@@ -39,8 +39,6 @@
   background-size: 200% 100%;
   animation: lux-shimmer 1.6s linear infinite;
 }
-[data-theme="mahaza"] .shadow-soft { box-shadow: var(--shadow-soft); }
-[data-theme="mahaza"] .shadow-lift { box-shadow: var(--shadow-lift); }
 
 /* Focus clavier homogène et bien visible. */
 [data-theme="mahaza"] :focus-visible {

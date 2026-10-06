@@ -32,6 +32,11 @@ const config: Config = {
         heading: ["var(--font-heading)"],
         sans: ["var(--font-body)"],
       },
+      // Ombres du thème premium Mahaza (variables définies dans lib/mahaza/mahaza.css).
+      boxShadow: {
+        soft: "var(--shadow-soft)",
+        lift: "var(--shadow-lift)",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
