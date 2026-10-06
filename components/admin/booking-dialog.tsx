@@ -34,7 +34,7 @@ export function BookingDialog({ bookingId, onClose }: Props) {
                 ["Quand", `${formatDateLong(booking.date)}, ${booking.start} – ${endTime(booking.start, booking.durationMin)}`],
                 ["Praticien", staff.find((p) => p.id === booking.practitionerId)?.name ?? "—"],
                 ["Salle", rooms.find((r) => r.id === booking.roomId)?.name ?? "—"],
-                ["Prix", formatPrice(booking.price)],
+                ...(booking.price != null ? [["Prix", formatPrice(booking.price)]] : []),
                 ["Acompte demandé", formatPrice(booking.depositAmount)],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4 px-3 py-2">

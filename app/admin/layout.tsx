@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { AdminSiteSelector } from "@/components/admin/site-selector";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = { title: "Back-office" };
@@ -26,6 +27,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </header>
       <AdminNav />
       <main className="mx-auto max-w-6xl px-4 py-6">
+        <AdminSiteSelector />
         <p className="mb-4 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
           Démonstration sans authentification. Les modifications restent en mémoire dans votre navigateur et disparaissent au rechargement de la page.
         </p>

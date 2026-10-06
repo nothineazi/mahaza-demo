@@ -1,6 +1,7 @@
 import type { Booking } from "@/data/types";
 
 export interface Draft {
+  siteId: string | null;
   serviceId: string | null;
   practitionerId: string | null;
   roomId: string | null;
@@ -12,6 +13,7 @@ export interface Draft {
 }
 
 export const emptyDraft: Draft = {
+  siteId: null,
   serviceId: null,
   practitionerId: null,
   roomId: null,
@@ -22,4 +24,22 @@ export const emptyDraft: Draft = {
   booking: null,
 };
 
-export const STEPS = ["Service", "Praticien", "Créneau", "Acompte", "Confirmation"] as const;
+export type StepKey = "site" | "service" | "practitioner" | "slot" | "deposit" | "confirmation";
+
+export const STEP_LABELS: Record<StepKey, string> = {
+  site: "Spa",
+  service: "Service",
+  practitioner: "Praticien",
+  slot: "Créneau",
+  deposit: "Acompte",
+  confirmation: "Confirmation",
+};
+
+export const STEP_TITLES: Record<StepKey, string> = {
+  site: "Choisissez votre spa",
+  service: "Choisissez votre service",
+  practitioner: "Choisissez votre praticien",
+  slot: "Choisissez votre créneau",
+  deposit: "Acompte & coordonnées",
+  confirmation: "Votre réservation",
+};

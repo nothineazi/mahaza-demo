@@ -4,7 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { theme } from "@/theme.config";
 import type { Booking, Practitioner, Room, SeedBooking } from "@/data/types";
 import { addDays, mondayOf, todayISO } from "./dates";
-import { depositFor } from "./availability";
+import { depositForService } from "./availability";
+import { belongsToSite, firstSiteId, getSite, serviceDuration } from "./sites";
 
 export type NewBooking = Omit<Booking, "id" | "reference" | "depositReceived">;
 
@@ -17,6 +18,9 @@ interface Store {
   staff: Practitioner[];
   /** Référence qui sera attribuée à la prochaine réservation (affichée dans les instructions MoMo). */
   nextReference: string;
+  /** Site affiché dans le back-office (sélecteur de /admin). */
+  adminSiteId: string;
+  setAdminSiteId: (id: string) => void;
   addBooking: (b: NewBooking) => Booking;
   setDepositReceived: (id: string, received: boolean) => void;
   saveRoom: (room: Room) => void;
@@ -30,23 +34,24 @@ const StoreContext = createContext<Store | null>(null);
 
 function seedToBookings(seed: SeedBooking[], today: string): Booking[] {
   const monday = mondayOf(today);
-  return seed.flatMap((s) => {
+  return seed.flatMap((s, index) => {
     const service = theme.services.find((x) => x.id === s.serviceId);
     if (!service) return [];
     return [
       {
         id: s.id,
-        reference: `${theme.referencePrefix}-${s.id.replace("b", "").padStart(4, "0")}`,
+        siteId: s.siteId ?? firstSiteId,
+        reference: `${theme.referencePrefix}-${(/^b\d+$/.test(s.id) ? s.id.slice(1) : String(index + 1)).padStart(4, "0")}`,
         serviceId: s.serviceId,
         practitionerId: s.practitionerId,
         roomId: s.roomId,
         date: addDays(monday, s.dayOffset),
         start: s.start,
-        durationMin: service.durationMin,
+        durationMin: serviceDuration(service),
         price: service.price,
         customerName: s.customerName,
         customerPhone: s.customerPhone,
-        depositAmount: depositFor(service.price, theme.depositPercent),
+        depositAmount: depositForService(service, getSite(s.siteId), theme.depositPercent),
         depositReceived: s.depositReceived,
       },
     ];
@@ -62,6 +67,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [rooms, setRooms] = useState<Room[]>(theme.rooms);
   const [staff, setStaff] = useState<Practitioner[]>(theme.practitioners);
+  const [adminSiteId, setAdminSiteId] = useState(firstSiteId);
   const counter = useRef(0);
 
   useEffect(() => {
@@ -96,6 +102,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       rooms,
       staff,
       nextReference,
+      adminSiteId,
+      setAdminSiteId,
       addBooking,
       newId,
       setDepositReceived: (id, received) =>
@@ -107,7 +115,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setStaff((prev) => (prev.some((p) => p.id === member.id) ? prev.map((p) => (p.id === member.id ? member : p)) : [...prev, member])),
       removeStaff: (id) => setStaff((prev) => prev.filter((p) => p.id !== id)),
     }),
-    [today, bookings, rooms, staff, nextReference, addBooking, newId],
+    [today, bookings, rooms, staff, nextReference, adminSiteId, addBooking, newId],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
@@ -117,4 +125,20 @@ export function useStore(): Store {
   const ctx = useContext(StoreContext);
   if (!ctx) throw new Error("useStore doit être utilisé dans <StoreProvider>");
   return ctx;
+}
+
+/** Données du site sélectionné dans le back-office (réservations, salles, praticiens). */
+export function useAdminSiteData() {
+  const store = useStore();
+  const { adminSiteId, bookings, rooms, staff } = store;
+  return useMemo(
+    () => ({
+      ...store,
+      siteId: adminSiteId,
+      bookings: bookings.filter((b) => belongsToSite(b, adminSiteId)),
+      rooms: rooms.filter((r) => belongsToSite(r, adminSiteId)),
+      staff: staff.filter((p) => belongsToSite(p, adminSiteId)),
+    }),
+    [store, adminSiteId, bookings, rooms, staff],
+  );
 }

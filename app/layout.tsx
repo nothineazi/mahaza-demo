@@ -8,7 +8,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: `${theme.name} — ${theme.tagline}`, template: `%s · ${theme.name}` },
   description: theme.description,
-  icons: { icon: "/icon.svg" },
+  icons: theme.icon ? { icon: [{ url: theme.icon.src, type: theme.icon.type }], apple: theme.icon.src } : { icon: "/icon.svg" },
   robots: { index: false, follow: false },
 };
 

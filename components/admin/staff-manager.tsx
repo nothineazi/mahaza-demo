@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { theme } from "@/theme.config";
 import type { Practitioner } from "@/data/types";
-import { useStore } from "@/lib/store";
+import { useAdminSiteData } from "@/lib/store";
+import { FictiveBadge } from "@/components/fictive-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,10 +16,10 @@ import { Switch } from "@/components/ui/switch";
 import { toggle } from "./helpers";
 
 export function StaffManager() {
-  const { staff, bookings, saveStaff, removeStaff, newId } = useStore();
+  const { staff, bookings, saveStaff, removeStaff, newId, siteId } = useAdminSiteData();
   const [editing, setEditing] = useState<Practitioner | null>(null);
 
-  const startNew = () => setEditing({ id: "", name: "", role: "", serviceIds: [], active: true });
+  const startNew = () => setEditing({ id: "", name: "", role: "", serviceIds: [], active: true, siteId });
 
   return (
     <div className="space-y-4">
@@ -39,7 +40,7 @@ export function StaffManager() {
                     {p.name.charAt(0)}
                   </span>
                   <div>
-                    <p className="font-semibold">{p.name}</p>
+                    <p className={p.fictive ? "flex flex-wrap items-center gap-2 font-semibold" : "font-semibold"}>{p.name}{p.fictive && <FictiveBadge />}</p>
                     <p className="text-sm text-muted-foreground">{p.role}</p>
                   </div>
                 </div>

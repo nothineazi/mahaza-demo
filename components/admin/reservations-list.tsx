@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { theme } from "@/theme.config";
-import { useStore } from "@/lib/store";
+import { useAdminSiteData } from "@/lib/store";
 import { endTime, formatDateShort } from "@/lib/dates";
 import { cn, formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ const FILTERS: { id: Filter; label: string }[] = [
 ];
 
 export function ReservationsList() {
-  const { ready, bookings, staff, rooms, setDepositReceived } = useStore();
+  const { ready, bookings, staff, rooms, setDepositReceived } = useAdminSiteData();
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
 

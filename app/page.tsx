@@ -6,8 +6,23 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MahazaHome } from "@/components/home/mahaza-home";
 
 export default function HomePage() {
+  // Marque avec contenu éditorial (Mahaza) : accueil dédié ; sinon accueil historique (St Louis).
+  if (theme.home) {
+    return (
+      <>
+        <SiteHeader />
+        <MahazaHome />
+        <SiteFooter />
+      </>
+    );
+  }
+  return <DefaultHome />;
+}
+
+function DefaultHome() {
   const activeStaff = theme.practitioners.filter((p) => p.active);
 
   return (
@@ -45,9 +60,9 @@ export default function HomePage() {
                       <div>
                         <p className="font-medium">{s.name}</p>
                         <p className="text-sm text-muted-foreground">{s.description}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{formatDuration(s.durationMin)}</p>
+                        {s.durationMin != null && <p className="mt-1 text-xs text-muted-foreground">{formatDuration(s.durationMin)}</p>}
                       </div>
-                      <p className="shrink-0 font-semibold text-primary">{formatPrice(s.price)}</p>
+                      {s.price != null && <p className="shrink-0 font-semibold text-primary">{formatPrice(s.price)}</p>}
                     </li>
                   ))}
               </ul>

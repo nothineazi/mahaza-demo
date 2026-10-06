@@ -1,9 +1,11 @@
 import { theme } from "@/theme.config";
-import type { Booking, Practitioner, Room } from "@/data/types";
+import type { Booking, Practitioner, Room, Site } from "@/data/types";
+import { multiSite, serviceDuration } from "@/lib/sites";
 import { endTime, formatDateLong } from "@/lib/dates";
 import { formatDuration, formatPrice } from "@/lib/utils";
 
 interface Props {
+  site?: Site;
   serviceId: string;
   practitioner?: Practitioner;
   room?: Room;
@@ -13,17 +15,19 @@ interface Props {
   booking?: Booking | null;
 }
 
-export function BookingSummary({ serviceId, practitioner, room, date, time, deposit, booking }: Props) {
+export function BookingSummary({ site, serviceId, practitioner, room, date, time, deposit, booking }: Props) {
   const service = theme.services.find((s) => s.id === serviceId);
   if (!service) return null;
 
+  const duration = serviceDuration(service);
   const rows: [string, string][] = [
-    ["Service", `${service.name} (${formatDuration(service.durationMin)})`],
+    ...(multiSite && site ? ([["Spa", site.name]] as [string, string][]) : []),
+    ["Service", service.durationMin != null ? `${service.name} (${formatDuration(service.durationMin)})` : service.name],
     ["Praticien", practitioner?.name ?? "—"],
     ["Salle", room?.name ?? "—"],
     ["Date", formatDateLong(date)],
-    ["Heure", `${time} – ${endTime(time, service.durationMin)}`],
-    ["Prix", formatPrice(service.price)],
+    ["Heure", `${time} – ${endTime(time, duration)}${service.durationMin == null ? " (créneau indicatif)" : ""}`],
+    ...(service.price != null ? ([["Prix", formatPrice(service.price)]] as [string, string][]) : []),
     ["Acompte", formatPrice(deposit)],
   ];
   if (booking) rows.unshift(["Référence", booking.reference]);

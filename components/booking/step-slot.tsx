@@ -3,9 +3,11 @@
 import { useMemo } from "react";
 import { theme } from "@/theme.config";
 import { useStore } from "@/lib/store";
-import { availableSlots } from "@/lib/availability";
-import { addDays, formatDate, weekday } from "@/lib/dates";
+import { availableSlots, hoursFor } from "@/lib/availability";
+import { belongsToSite, serviceDuration } from "@/lib/sites";
+import { addDays, formatDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
+import { FictiveBadge } from "@/components/fictive-badge";
 import type { Draft } from "./types";
 
 interface Props {
@@ -20,8 +22,8 @@ export function StepSlot({ draft, onChange }: Props) {
   const service = theme.services.find((s) => s.id === draft.serviceId);
 
   const compatibleRooms = useMemo(
-    () => rooms.filter((r) => r.active && service && r.categories.includes(service.category)),
-    [rooms, service],
+    () => rooms.filter((r) => r.active && belongsToSite(r, draft.siteId ?? "") && service && r.categories.includes(service.category)),
+    [rooms, service, draft.siteId],
   );
 
   const days = useMemo(() => (ready ? Array.from({ length: DAYS_AHEAD }, (_, i) => addDays(today, i)) : []), [ready, today]);
@@ -32,7 +34,7 @@ export function StepSlot({ draft, onChange }: Props) {
       date: draft.date,
       practitionerId: draft.practitionerId,
       roomId: draft.roomId,
-      durationMin: service.durationMin,
+      durationMin: serviceDuration(service),
       bookings,
       opening: theme.opening,
     });
@@ -54,7 +56,7 @@ export function StepSlot({ draft, onChange }: Props) {
         <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">1. Choisissez un jour</h3>
         <div className="-mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-2">
           {days.map((d) => {
-            const closed = theme.opening.closedDays.includes(weekday(d));
+            const closed = hoursFor(theme.opening, d) === null;
             const selected = draft.date === d;
             return (
               <button
@@ -93,7 +95,7 @@ export function StepSlot({ draft, onChange }: Props) {
                     selected ? "border-primary ring-2 ring-primary" : "border-border",
                   )}
                 >
-                  <span className="block font-medium">{r.name}</span>
+                  <span className={r.fictive ? "flex flex-wrap items-center gap-2 font-medium" : "block font-medium"}>{r.name}{r.fictive && <FictiveBadge />}</span>
                   <span className="block text-sm text-muted-foreground">{r.description}</span>
                 </button>
               </li>

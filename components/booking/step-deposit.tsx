@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Check, Copy, Info } from "lucide-react";
 import { theme } from "@/theme.config";
 import { useStore } from "@/lib/store";
-import { depositFor } from "@/lib/availability";
+import { depositForService } from "@/lib/availability";
+import { getSite } from "@/lib/sites";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,9 @@ export function StepDeposit({ draft, onChange, onConfirm }: Props) {
   const service = theme.services.find((s) => s.id === draft.serviceId);
   if (!service || !draft.date || !draft.time) return null;
 
-  const deposit = depositFor(service.price, theme.depositPercent);
+  const site = getSite(draft.siteId);
+  const flatDeposit = site.depositAmount != null;
+  const deposit = depositForService(service, site, theme.depositPercent);
   const nameOk = draft.name.trim().length >= 2;
   const phoneOk = draft.phone.replace(/\D/g, "").length >= 8;
 
@@ -49,6 +52,7 @@ export function StepDeposit({ draft, onChange, onConfirm }: Props) {
   return (
     <form onSubmit={submit} className="space-y-6" noValidate>
       <BookingSummary
+        site={site}
         serviceId={service.id}
         practitioner={staff.find((p) => p.id === draft.practitionerId)}
         room={rooms.find((r) => r.id === draft.roomId)}
@@ -60,7 +64,7 @@ export function StepDeposit({ draft, onChange, onConfirm }: Props) {
       <section className="space-y-3 rounded-lg border border-primary/40 bg-secondary p-4 text-secondary-foreground">
         <h3 className="font-heading text-lg font-semibold">Payez l&apos;acompte par Mobile Money</h3>
         <p className="text-sm">
-          Pour confirmer votre rendez-vous, envoyez <strong>{formatPrice(deposit)}</strong> ({theme.depositPercent} % du prix) au numéro marchand ci-dessous.
+          Pour confirmer votre rendez-vous, envoyez <strong>{formatPrice(deposit)}</strong> ({flatDeposit ? "acompte forfaitaire — montant FICTIF de démonstration" : `${theme.depositPercent} % du prix`}) au numéro marchand ci-dessous.
         </p>
         <div className="flex items-center justify-between gap-3 rounded-md bg-card p-3 text-card-foreground">
           <div>

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { theme } from "@/theme.config";
 import type { Room } from "@/data/types";
-import { useStore } from "@/lib/store";
+import { useAdminSiteData } from "@/lib/store";
+import { FictiveBadge } from "@/components/fictive-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,10 +16,10 @@ import { Switch } from "@/components/ui/switch";
 import { toggle } from "./helpers";
 
 export function RoomsManager() {
-  const { rooms, bookings, saveRoom, removeRoom, newId } = useStore();
+  const { rooms, bookings, saveRoom, removeRoom, newId, siteId } = useAdminSiteData();
   const [editing, setEditing] = useState<Room | null>(null);
 
-  const startNew = () => setEditing({ id: "", name: "", description: "", categories: [], active: true });
+  const startNew = () => setEditing({ id: "", name: "", description: "", categories: [], active: true, siteId });
 
   return (
     <div className="space-y-4">
@@ -35,7 +36,7 @@ export function RoomsManager() {
             <Card className="flex h-full flex-col gap-3 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold">{room.name}</p>
+                  <p className={room.fictive ? "flex flex-wrap items-center gap-2 font-semibold" : "font-semibold"}>{room.name}{room.fictive && <FictiveBadge />}</p>
                   <p className="text-sm text-muted-foreground">{room.description}</p>
                 </div>
                 <Badge variant={room.active ? "success" : "outline"}>{room.active ? "Active" : "Inactive"}</Badge>

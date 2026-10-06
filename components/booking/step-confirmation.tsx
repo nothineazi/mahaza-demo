@@ -5,8 +5,9 @@ import { CheckCircle2, MessageCircle } from "lucide-react";
 import { theme } from "@/theme.config";
 import { useStore } from "@/lib/store";
 import { endTime, formatDateLong } from "@/lib/dates";
-import { formatPrice } from "@/lib/utils";
-import { whatsappLink } from "@/lib/whatsapp";
+import { cn, formatPrice } from "@/lib/utils";
+import { getSite, multiSite } from "@/lib/sites";
+import { whatsappButtonClass, whatsappLink } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 import { BookingSummary } from "./summary";
 import type { Draft } from "./types";
@@ -19,9 +20,10 @@ export function StepConfirmation({ draft, onRestart }: { draft: Draft; onRestart
   const service = theme.services.find((s) => s.id === booking.serviceId);
   const practitioner = staff.find((p) => p.id === booking.practitionerId);
   const room = rooms.find((r) => r.id === booking.roomId);
+  const site = getSite(booking.siteId);
 
   const message = [
-    `Bonjour ${theme.name}, c'est ${booking.customerName}.`,
+    `Bonjour ${theme.name}${multiSite ? ` (${site.name})` : ""}, c'est ${booking.customerName}.`,
     `Je viens de réserver : ${service?.name} avec ${practitioner?.name} (${room?.name}),`,
     `le ${formatDateLong(booking.date)} de ${booking.start} à ${endTime(booking.start, booking.durationMin)}.`,
     `Référence : ${booking.reference}.`,
@@ -40,6 +42,7 @@ export function StepConfirmation({ draft, onRestart }: { draft: Draft; onRestart
       </div>
 
       <BookingSummary
+        site={site}
         serviceId={booking.serviceId}
         practitioner={practitioner}
         room={room}
@@ -50,7 +53,7 @@ export function StepConfirmation({ draft, onRestart }: { draft: Draft; onRestart
       />
 
       <div className="space-y-3">
-        <Button asChild variant="whatsapp" size="lg" className="w-full">
+        <Button asChild variant="whatsapp" size="lg" className={cn("w-full", whatsappButtonClass)}>
           <a href={whatsappLink(theme.whatsappNumber, message)} target="_blank" rel="noopener noreferrer">
             <MessageCircle />
             Envoyer la confirmation sur WhatsApp
