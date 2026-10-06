@@ -3,8 +3,11 @@ import animate from "tailwindcss-animate";
 
 const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
+// Build St Louis : les composants premium Mahaza ne sont pas analysés (le CSS St Louis reste identique).
+const stlouis = process.env.NEXT_PUBLIC_THEME === "stlouis";
+
 const config: Config = {
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", ...(stlouis ? ["!./components/mahaza/**"] : [])],
   theme: {
     extend: {
       colors: {

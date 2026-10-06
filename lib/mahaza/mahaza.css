@@ -1,0 +1,64 @@
+/*
+ * Habillage premium du thème Mahaza. Importé uniquement via lib/mahaza/fonts.ts (jamais en build St Louis).
+ * Les couleurs restent celles du thème (variables --background, --primary…) : aucun jeton n'est modifié.
+ */
+
+[data-theme="mahaza"] {
+  --shadow-soft: 0 1px 2px rgb(46 42 43 / 0.04), 0 10px 28px -14px rgb(46 42 43 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(46 42 43 / 0.06), 0 22px 44px -18px rgb(46 42 43 / 0.26);
+  --ease-lux: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+[data-theme="mahaza"] .font-heading {
+  font-feature-settings: "liga", "kern";
+  letter-spacing: 0.005em;
+}
+
+@keyframes lux-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes lux-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lux-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes lux-pop {
+  0% { transform: scale(0.96); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+[data-theme="mahaza"] .lux-fade-up { animation: lux-fade-up 0.5s var(--ease-lux) both; }
+[data-theme="mahaza"] .lux-fade { animation: lux-fade 0.4s var(--ease-lux) both; }
+[data-theme="mahaza"] .lux-pop { animation: lux-pop 0.28s var(--ease-lux) both; }
+[data-theme="mahaza"] .lux-skeleton {
+  background: linear-gradient(90deg, rgb(var(--muted)) 25%, rgb(var(--secondary)) 50%, rgb(var(--muted)) 75%);
+  background-size: 200% 100%;
+  animation: lux-shimmer 1.6s linear infinite;
+}
+[data-theme="mahaza"] .shadow-soft { box-shadow: var(--shadow-soft); }
+[data-theme="mahaza"] .shadow-lift { box-shadow: var(--shadow-lift); }
+
+/* Focus clavier homogène et bien visible. */
+[data-theme="mahaza"] :focus-visible {
+  outline: 2px solid rgb(var(--primary));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Les animations premium sont neutralisées pour les personnes qui préfèrent moins de mouvement. */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="mahaza"] *,
+  [data-theme="mahaza"] *::before,
+  [data-theme="mahaza"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-theme="mahaza"] .lux-skeleton { animation: none; }
+}

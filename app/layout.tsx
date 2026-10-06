@@ -3,6 +3,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { theme } from "@/theme.config";
 import { hexToChannels } from "@/lib/utils";
 import { StoreProvider } from "@/lib/store";
+import { MahazaStoreProvider } from "@/lib/mahaza/store";
+import { premiumRootClass } from "@/lib/mahaza/root-class";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -40,10 +42,18 @@ const themeVars = {
 } as CSSProperties;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const fontClass = theme.id === "mahaza" ? premiumRootClass : undefined;
+
   return (
-    <html lang="fr" style={themeVars} data-theme={theme.id}>
+    <html lang="fr" style={themeVars} data-theme={theme.id} {...(fontClass ? { className: fontClass } : {})}>
       <body className="min-h-dvh">
-        <StoreProvider>{children}</StoreProvider>
+        {theme.id === "mahaza" ? (
+          <StoreProvider>
+            <MahazaStoreProvider>{children}</MahazaStoreProvider>
+          </StoreProvider>
+        ) : (
+          <StoreProvider>{children}</StoreProvider>
+        )}
       </body>
     </html>
   );
