@@ -2,10 +2,14 @@
 
 Démo cliquable, **front-only**, d'un site de réservation pour deux marques :
 **Mahaza Beauty** (spa / institut de beauté, 5 sites) et **St Louis** (barbershop). Un seul code, deux thèmes.
-Aucune base de données, aucun secret, aucune clé API, aucun vrai paiement : l'état du back-office
-vit en mémoire (React state). Le thème Mahaza reprend le contenu réel du site actuel de Mahaza Beauty
-(catalogue, sites, horaires, contact, médias) ; le reste est fictif et marqué comme tel (voir plus bas).
-Le thème `stlouis` est inchangé. Le site est toujours en `noindex` (meta `robots` + `public/robots.txt`).
+Aucune base de données, aucun secret, aucune clé API, aucun vrai paiement : l'état du site et du back-office
+vit en mémoire (React state) et disparaît au rechargement de la page.
+
+- Le thème **Mahaza** est « premium » : direction artistique luxe, panier multi-soins, acompte avec compte à rebours,
+  cartes cadeaux, confirmation avec calendrier (.ics), back-office complet. Il reprend le contenu réel du site actuel
+  (catalogue, sites, horaires, contact, médias) ; le reste est fictif et marqué **FICTIF** (voir plus bas).
+- Le thème **St Louis** n'a pas changé : son HTML prérendu est identique (voir « Isolation de St Louis »).
+- Le site est toujours en `noindex` (meta `robots` + `public/robots.txt`).
 
 ## Lancer
 
@@ -13,21 +17,59 @@ Le thème `stlouis` est inchangé. Le site est toujours en `noindex` (meta `robo
 npm ci
 cp .env.example .env.local        # puis choisir NEXT_PUBLIC_THEME
 npm run dev                       # http://localhost:3000
+npm test                          # tests unitaires de la logique (vitest)
+npm run lint
 ```
 
 `NEXT_PUBLIC_THEME` vaut `mahaza` (défaut) ou `stlouis`. Elle est lue **au build** :
-changer de marque impose de rebuilder.
+changer de marque impose de rebuilder (voir « Déploiement »).
 
-```bash
-NEXT_PUBLIC_THEME=stlouis npm run build && npm start
-```
+## Fonctionnalités du thème Mahaza
 
-## Docker
+### Interface premium
 
-```bash
-docker build --build-arg NEXT_PUBLIC_THEME=stlouis -t reservation-demo .
-docker run --rm -p 3000:3000 reservation-demo
-```
+- Typographie d'affichage serif (**Cormorant Garamond**, chargée via `next/font`, sans décalage de mise en page) pour les titres ;
+  texte courant en police système. Palette existante conservée (or, charbon, saumon), beaucoup d'espace blanc.
+- Micro-interactions (survol, focus, changements d'étape), skeletons de chargement. **`prefers-reduced-motion`** : toutes les
+  animations et transitions sont neutralisées, le carrousel du hero ne défile plus tout seul.
+- Contrastes WCAG AA, navigation clavier, focus visible, lien d'évitement, dialogues à piège de focus, erreurs reliées aux champs.
+- `next/image` partout, dimensions explicites : CLS de 0,00 au chargement de l'accueil, de la réservation et du back-office.
+
+### Parcours client (`/` et `/reserver`)
+
+1. **Spa** → 2. **Soins** → 3. **Praticien** → 4. **Créneau** → 5. **Acompte & coordonnées** → 6. **Confirmation**.
+
+- **Panier multi-soins** (jusqu'à 5, configurable) : recherche, filtre par catégorie ; les soins s'enchaînent sur un même créneau.
+  La **durée cumulée** n'est affichée que si *toutes* les durées sont renseignées (aujourd'hui aucune ne l'est : seul
+  « créneaux indicatifs de 60 min (FICTIF) » est mentionné, rien n'est inventé).
+- **Sans préférence de praticien** (choix par défaut, par soin) : le praticien disponible est attribué automatiquement ;
+  la **salle** est toujours attribuée automatiquement. Les créneaux proposés sont ceux où *tout* le panier est réalisable.
+- **Barre de progression** (étapes franchies cliquables) et **récapitulatif persistant** : colonne latérale sur ordinateur,
+  barre fixe + feuille détaillée sur mobile.
+- **Acompte** forfaitaire par réservation (FICTIF) et **compte à rebours d'expiration** (30 min, FICTIF, configurable globalement ou
+  par spa) : à zéro, la réservation passe en « annulée » et le créneau est libéré ; l'écran de confirmation l'indique.
+- **Confirmation** : récapitulatif, lien WhatsApp pré-rempli, **Ajouter au calendrier** (fichier `.ics`, heure de Douala convertie en UTC,
+  titre préfixé « [DÉMO] », aucune adresse inventée), **Modifier** (nouveau jour/heure) et **Annuler** (simulés, état local),
+  et un « outil de démo » pour simuler la confirmation du salon.
+- **Cartes cadeaux** (accueil, `#cartes-cadeaux`) : paliers de 20 000 à 100 000 FCFA ou montant libre dans cette fourchette, destinataire,
+  message personnalisé (200 caractères), **aperçu visuel en direct**, **code fictif** généré (`GC-XXXX-XXXX`, non valable),
+  instructions Mobile Money manuelles et **envoi simulé via lien `wa.me`**.
+
+### Back-office (`/admin`, sans authentification)
+
+Toutes les vues sont **filtrées par spa** avec le sélecteur de site.
+
+| Écran | URL | Contenu |
+| --- | --- | --- |
+| Tableau de bord | `/admin` | Réservations du jour / de la semaine, acomptes en attente (montant, prochaine expiration), taux de remplissage, **CA estimé (barème fictif)**, prochains rendez-vous, **rappels J-1**, graphique de la semaine (avec tableau équivalent). Tout est calculé depuis les données seed et marqué FICTIF. |
+| Planning | `/admin/planning` | Vue jour (colonnes par praticien ou par salle ; agenda chronologique sur mobile) et semaine ; couleurs par statut. |
+| Réservations | `/admin/reservations` | Recherche (nom, téléphone, référence), filtres statut / praticien / soin / période, **export CSV** de la vue filtrée du spa. |
+| Détail d'une réservation | (dialogue) | **Cycle de vie** : en attente d'acompte → confirmée → terminée / no-show, annulée, avec corrections ; **Déplacer** (jour, heure, praticien, salle) avec **détection de conflit** praticien / salle ; **Envoyer un rappel WhatsApp** (`wa.me` + message modèle J-1 pré-rempli). |
+| Clients | `/admin/clients` | Fiches (FICTIF) : historique, notes (état local), **points de fidélité** et palier (règle FICTIVE). |
+| Salles / Staff | `/admin/salles`, `/admin/staff` | Création, édition, activation ; suppression bloquée si des réservations y sont liées. |
+
+Règles du cycle de vie : « terminée » et « no-show » ne sont proposés qu'à partir du jour du rendez-vous ; rouvrir une réservation annulée
+revérifie que le créneau est encore libre ; les annulées et les no-show libèrent le créneau.
 
 ## Où modifier quoi
 
@@ -35,21 +77,20 @@ docker run --rm -p 3000:3000 reservation-demo
 | --- | --- |
 | Nom, logo, couleurs, horaires, contact, réseaux, textes d'accueil, n° MoMo, n° WhatsApp | `theme.config.ts` (n° MoMo / WhatsApp = **placeholders**) |
 | Sites (spas), catalogue, praticiens, salles, réservations seed, acompte forfaitaire par site | `data/mahaza.ts`, `data/stlouis.ts` |
+| Réglages premium FICTIFS : délai d'acompte, nb max de soins, fidélité, barème du CA estimé, cartes cadeaux | `data/mahaza.ts` (`mahazaPremium`) ; délai par spa : `Site.depositHoldMin` |
+| Clients et historique de démonstration | `data/mahaza-demo.ts` |
+| Logique (créneaux, conflits, cycle de vie, ICS, CSV, KPI, fidélité…) et tests | `lib/mahaza/`, `tests/mahaza/` |
+| Interface premium (accueil, réservation, back-office) | `components/mahaza/` |
+| Interface St Louis (inchangée) | `components/booking/`, `components/admin/`, `components/ui/` |
 | Médias Mahaza (fichiers locaux, via `next/image`) | `public/mahaza/` |
-| Parcours client (`/reserver`) | `components/booking/` |
-| Back-office (`/admin`, sans authentification) | `app/admin/`, `components/admin/` |
-
-## Parcours
-
-- **Client** : **spa** (étape 0, Mahaza uniquement : 5 sites) → service → praticien → jour / salle / heure → acompte (instructions MoMo manuel, aucun paiement réel) → confirmation + bouton WhatsApp (`wa.me`) pré-rempli. Mobile-first, UI en français. Chaque spa a ses propres salles, praticiens et réservations seed.
-- **Accueil Mahaza** : hero (alternance `hero-1` / `hero-2`), « La magie du bien-être », 4 soins vedettes, process en 3 étapes (Diagnostic, Soins, Conseils & Suivi), catalogue des services, **cartes cadeaux** (20 000 à 100 000 FCFA : choix du montant uniquement, instructions MoMo manuel, aucun paiement), spas, horaires, contact, réseaux.
-- **Back-office** `/admin` : **sélecteur de spa**, planning jour / semaine, réservations (statut « acompte reçu » modifiable), salles, staff — tout est filtré par spa. Les réservations faites côté client apparaissent dans le back-office tant que la page n'est pas rechargée.
 
 ## Prix, durées, acompte
 
-- **Aucun prix de soin** : le site actuel n'en affiche pas. `Service.price` est optionnel ; vide, l'UI n'affiche aucun prix.
-- **Durées** : `Service.durationMin` est optionnel (vide si inconnu). Les créneaux utilisent `defaultDurationMin = 60` min (**FICTIF**) et sont indiqués « créneau indicatif ».
-- **Acompte** : forfait par site, `Site.depositAmount` dans `data/mahaza.ts` (constante `FICTIVE_DEPOSIT_FCFA = 5000`, **FICTIF**, configurable site par site). St Louis garde son acompte en pourcentage.
+- **Aucun prix de soin** : le site actuel n'en affiche pas. `Service.price` est optionnel ; vide, l'UI n'affiche aucun prix côté client.
+- **CA estimé (back-office uniquement)** : barème **FICTIF** par catégorie (`mahazaPremium.fictivePriceByCategory`), badge FICTIF et mention
+  « barème fictif ». Si `Service.price` est renseigné un jour, il prend le dessus.
+- **Durées** : `Service.durationMin` est optionnel (vide si inconnu). Les créneaux utilisent `defaultDurationMin = 60` min (**FICTIF**).
+- **Acompte** : forfait par site (`Site.depositAmount`, **FICTIF**, 5 000 FCFA), dû **une fois par réservation**, quel que soit le nombre de soins.
 
 ## Données réelles / fictives / à confirmer
 
@@ -64,24 +105,46 @@ docker run --rm -p 3000:3000 reservation-demo
 | Durées des soins (vides) | | | ✅ |
 | Durée de créneau par défaut (60 min) | | ✅ | ✅ |
 | Acompte forfaitaire (5 000 FCFA par site) | | ✅ | ✅ |
+| Délai d'expiration de l'acompte (30 min ; 6 h pour les acomptes en attente des données seed) | | ✅ | ✅ |
+| Limite de 5 soins par réservation | | ✅ | ✅ |
+| Barème du CA estimé (par catégorie) — back-office uniquement | | ✅ | ✅ |
+| Règle de fidélité (10 points par visite terminée, paliers Découverte / Argent 30 / Or 60) | | ✅ | ✅ |
 | Contact `welcome@mahazabeauty.com` | ✅ | | |
 | Réseaux (facebook, instagram, tiktok, twitter, linkedin) : profils « mahazabeauty » | ✅ nom | | ✅ URLs exactes (ex. LinkedIn `/company/` ou `/in/`) |
 | Textes d'accueil : accroche, « Bienvenue à Mahaza Beauty », « La magie du bien-être », 3 étapes du process, 4 soins vedettes | ✅ | | |
-| Paragraphe de la section « La magie du bien-être » et phrase d'intro cartes cadeaux | | ✅ (rédigés à partir du catalogue) | ✅ |
+| Paragraphe de la section « La magie du bien-être », phrase d'intro cartes cadeaux, libellés de l'accueil premium | | ✅ (rédigés à partir du catalogue) | ✅ |
 | Cartes cadeaux : fourchette 20 000 – 100 000 FCFA | ✅ | | |
-| Cartes cadeaux : paliers exacts (20/40/60/80/100 000) | | ✅ | ✅ |
+| Cartes cadeaux : paliers (20/40/60/80/100 000) et pas du montant libre (5 000) ; codes générés (non valables) | | ✅ | ✅ |
 | Médias (logo, hero, about, gift, process, flower, icône) | ✅ | | |
 | Palette de couleurs | dérivée des médias | | ✅ validation de marque |
 | Praticiens (noms, fonctions, affectations) | | ✅ **FICTIF** | |
 | Salles | | ✅ **FICTIF** | |
-| Réservations seed, clients, téléphones | | ✅ **FICTIF** | |
+| Réservations seed, **clients**, historique, notes, téléphones | | ✅ **FICTIF** | |
 | N° marchand MoMo, n° WhatsApp (`6 00 00 00 00`, `237600000000`) | | ✅ placeholders | ✅ |
 
-Les praticiens, salles et réservations seed portent `fictive: true` ; l'UI affiche un badge **FICTIF** (parcours client et back-office).
+Praticiens, salles, clients et réservations seed portent `fictive: true` ; l'UI affiche un badge **FICTIF** (parcours client et back-office).
+Les numéros de téléphone des clients de démonstration sont fictifs : les liens de rappel WhatsApp qui les visent ne mènent à personne.
+
+## Décisions à confirmer
+
+Choix pris par défaut (option la plus simple) pour cette passe, à valider avec Mahaza :
+
+1. **CA estimé** : barème fictif par catégorie, affiché uniquement dans le back-office (alternative : n'afficher que les acomptes).
+2. **Salle** : attribuée automatiquement, le client ne la choisit plus ; l'admin peut la changer via « Déplacer ».
+3. **Un seul acompte par réservation**, même avec plusieurs soins ; le délai d'expiration (30 min) annule la réservation et libère le créneau.
+4. **Enchaînement des soins** sans pause entre eux, dans l'ordre d'ajout ; un praticien par soin (ou « sans préférence »).
+5. **Planning** : déplacement uniquement via le dialogue « Déplacer » (pas de glisser-déposer). Pour Mahaza, `/admin` est le tableau de bord ; le planning est à `/admin/planning`.
+6. **Export CSV** : la vue filtrée du spa sélectionné (sans filtre = tout le spa). Séparateur `;`, UTF-8 avec BOM, neutralisation des formules (`= + - @`).
+7. **Fidélité** : points dérivés des visites terminées (+ bonus de démonstration) ; aucun avantage associé aux paliers.
+8. **Rappel J-1** : message modèle, envoi manuel depuis WhatsApp (ouverture de `wa.me`), pas d'envoi automatique.
+9. **Cartes cadeaux** : code fictif non valable, non applicable au paiement d'une réservation ; envoi par lien `wa.me` pré-rempli.
+10. **Clients** : un client créé par le parcours web est rattaché à un client existant du même spa via les 9 derniers chiffres de son téléphone.
+11. **Hors périmètre** de cette passe : authentification réelle, backend, vrai paiement, version anglaise (FR uniquement), persistance.
 
 ## Palette Mahaza (WCAG AA)
 
-Dérivée du logo (or `#E9B93C`, gris charbon), de la fleur (saumon `#DE968D`) et des visuels (serviette ocre, crème). Polices : inchangées (Georgia pour les titres, police système pour le texte). Rapports de contraste texte / fond (seuil AA : 4,5:1) :
+Dérivée du logo (or `#E9B93C`, gris charbon), de la fleur (saumon `#DE968D`) et des visuels (serviette ocre, crème). Aucun jeton de
+couleur n'a été modifié. Rapports de contraste texte / fond (seuil AA : 4,5:1) :
 
 | Texte | Fond | Rapport |
 | --- | --- | :---: |
@@ -93,13 +156,29 @@ Dérivée du logo (or `#E9B93C`, gris charbon), de la fleur (saumon `#DE968D`) e
 | muted-foreground `#645D5E` | background / muted / secondary | 6,2 / 5,6 / 5,6 |
 | accent-foreground `#2B2105` | accent `#E9B93C` | 8,7 |
 | success `#17703F` · destructive `#B42323` | card | 6,1 · 6,6 |
+| background (crème) | foreground (charbon), pied de page | 13,7 (texte à 70 % : 7,5) |
+| accent (or) | foreground (charbon) | 7,7 |
 
-Le bouton WhatsApp utilise le vert `success` du thème Mahaza (le vert d'origine, inchangé pour St Louis, n'atteint pas 4,5:1). Sur le hero, un voile sombre (`foreground` à 75 %) garantit le contraste du texte blanc sur les photos.
+`node scripts/check-contrast.mjs` recalcule **49 couples** (y compris les teintes translucides, le hero sur photo claire, la carte
+cadeau, les blocs du planning) et les composants d'interface (bordure des champs, interrupteurs, focus : seuil 3:1). Le bouton WhatsApp
+utilise le vert `success` (le vert d'origine, conservé pour St Louis, n'atteint pas 4,5:1). Sur le hero, un voile charbon (≥ 75 %)
+garantit le contraste du texte clair sur les photos.
+
+## Isolation de St Louis
+
+Tout le code premium vit dans `components/mahaza/`, `lib/mahaza/` et `data/mahaza-demo.ts`. Les composants partagés avec St Louis
+(`components/booking`, `components/admin`, `components/ui`, en-tête / pied de page, `lib/store.tsx`, `app/globals.css`) ne sont pas modifiés ;
+`app/**` n'aiguille que par `theme.id`. La police et le CSS premium ne sont importés qu'en build Mahaza, et Tailwind n'analyse pas
+`components/mahaza/` en build St Louis. `/admin/planning` et `/admin/clients` répondent 404 sous St Louis.
+
+Vérification : build St Louis avant / après, comparaison du HTML et des flux RSC prérendus (seuls le buildId, les noms de fichiers hachés
+et les identifiants de modules webpack sont normalisés) et des déclarations CSS de toutes les classes utilisées par St Louis.
 
 ## Vérifications
 
 ```bash
-npm ci && npm run lint
+npm ci && npm run lint && npm test
 NEXT_PUBLIC_THEME=mahaza npm run build
 NEXT_PUBLIC_THEME=stlouis npm run build
+node scripts/check-contrast.mjs
 ```

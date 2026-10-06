@@ -38,7 +38,7 @@ export function HeroCarousel() {
         />
       ))}
       {/* Voile sombre : garantit un contraste AA du texte clair quel que soit le visuel. */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-foreground/90 via-foreground/75 to-foreground/60" aria-hidden />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-foreground/90 via-foreground/80 to-foreground/75" aria-hidden />
 
       <div className="mx-auto flex min-h-[560px] max-w-6xl flex-col items-start justify-center gap-7 px-4 py-20 text-background sm:min-h-[640px] sm:px-6">
         <p className="lux-fade-up text-xs font-semibold uppercase tracking-[0.32em] text-accent sm:text-sm">{home.heroKicker}</p>
