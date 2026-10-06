@@ -6,10 +6,13 @@ import { BrandLogo } from "@/components/brand-logo";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { AdminSiteSelector } from "@/components/admin/site-selector";
 import { Badge } from "@/components/ui/badge";
+import { theme } from "@/theme.config";
+import { MahazaAdminShell } from "@/components/mahaza/admin/shell";
 
 export const metadata: Metadata = { title: "Back-office" };
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+  if (theme.id === "mahaza") return <MahazaAdminShell>{children}</MahazaAdminShell>;
   return (
     <div className="min-h-dvh">
       <header className="border-b border-border bg-background">

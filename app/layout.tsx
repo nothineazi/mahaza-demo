@@ -47,13 +47,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr" style={themeVars} data-theme={theme.id} {...(fontClass ? { className: fontClass } : {})}>
       <body className="min-h-dvh">
-        {theme.id === "mahaza" ? (
-          <StoreProvider>
-            <MahazaStoreProvider>{children}</MahazaStoreProvider>
-          </StoreProvider>
-        ) : (
-          <StoreProvider>{children}</StoreProvider>
-        )}
+        {theme.id === "mahaza" ? <MahazaStoreProvider>{children}</MahazaStoreProvider> : <StoreProvider>{children}</StoreProvider>}
       </body>
     </html>
   );
