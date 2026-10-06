@@ -4,8 +4,9 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { theme } from "@/theme.config";
 import type { Booking } from "@/data/types";
-import { useStore } from "@/lib/store";
-import { addDays, endTime, formatDate, formatDateLong, timeToMin, weekDays, weekday } from "@/lib/dates";
+import { useAdminSiteData, useStore } from "@/lib/store";
+import { hoursFor } from "@/lib/availability";
+import { addDays, endTime, formatDate, formatDateLong, timeToMin, weekDays } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BookingDialog } from "./booking-dialog";
@@ -15,7 +16,7 @@ type View = "jour" | "semaine";
 const HOUR_PX = 64;
 
 export function Planning() {
-  const { ready, today, bookings, staff } = useStore();
+  const { ready, today, bookings, staff } = useAdminSiteData();
   const [view, setView] = useState<View>("jour");
   const [date, setDate] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -104,8 +105,9 @@ function DayView({
   staffList: ReturnType<typeof useStore>["staff"];
   onOpen: (id: string) => void;
 }) {
-  const open = timeToMin(theme.opening.open);
-  const close = timeToMin(theme.opening.close);
+  // Grille alignée sur l'heure pleine (ex. ouverture 8h30 -> grille dès 8h).
+  const open = Math.floor(timeToMin(theme.opening.open) / 60) * 60;
+  const close = Math.ceil(timeToMin(theme.opening.close) / 60) * 60;
   const dayBookings = bookings.filter((b) => b.date === date);
   const columns = staffList.filter((p) => p.active || dayBookings.some((b) => b.practitionerId === p.id));
   const hours = Array.from({ length: Math.ceil((close - open) / 60) }, (_, i) => open + i * 60);
@@ -177,13 +179,13 @@ function WeekView({
   onOpen: (id: string) => void;
   onPickDay: (d: string) => void;
 }) {
-  const { staff } = useStore();
+  const { staff } = useAdminSiteData();
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <div className="grid min-w-[980px] grid-cols-7">
         {days.map((d) => {
           const list = bookings.filter((b) => b.date === d).sort((a, b) => a.start.localeCompare(b.start));
-          const closed = theme.opening.closedDays.includes(weekday(d));
+          const closed = hoursFor(theme.opening, d) === null;
           return (
             <div key={d} className="border-r border-border last:border-r-0">
               <button

@@ -34,13 +34,15 @@ export function StepService({ draft, onSelect }: Props) {
                     >
                       <span>
                         <span className="block font-medium">{s.name}</span>
-                        <span className="mt-0.5 block text-sm text-muted-foreground">{s.description}</span>
-                        <span className="mt-1.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="size-3.5" />
-                          {formatDuration(s.durationMin)}
-                        </span>
+                        {s.description && <span className="mt-0.5 block text-sm text-muted-foreground">{s.description}</span>}
+                        {s.durationMin != null && (
+                          <span className="mt-1.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="size-3.5" />
+                            {formatDuration(s.durationMin)}
+                          </span>
+                        )}
                       </span>
-                      <span className="shrink-0 font-semibold text-primary">{formatPrice(s.price)}</span>
+                      {s.price != null && <span className="shrink-0 font-semibold text-primary">{formatPrice(s.price)}</span>}
                     </button>
                   </li>
                 );
