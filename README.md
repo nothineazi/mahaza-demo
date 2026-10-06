@@ -141,6 +141,37 @@ Choix pris par défaut (option la plus simple) pour cette passe, à valider avec
 10. **Clients** : un client créé par le parcours web est rattaché à un client existant du même spa via les 9 derniers chiffres de son téléphone.
 11. **Hors périmètre** de cette passe : authentification réelle, backend, vrai paiement, version anglaise (FR uniquement), persistance.
 
+## Déploiement
+
+L'image Docker (`Dockerfile`, 3 étapes : `deps` → `builder` → `runner`) embarque le build **standalone** de Next.js (`output: "standalone"`).
+
+```bash
+# Mahaza (défaut)
+docker build -t mahaza-demo .
+# St Louis
+docker build --build-arg NEXT_PUBLIC_THEME=stlouis -t stlouis-demo .
+
+docker run --rm -p 3000:3000 mahaza-demo       # http://localhost:3000
+curl -i http://localhost:3000/api/health        # 200 {"status":"ok","theme":"mahaza"}
+```
+
+- **`NEXT_PUBLIC_THEME` est figée au build** : l'`ARG` est déclarée *avant* `npm run build` dans l'étape `builder`. La passer à `docker run`
+  (`-e`) n'a aucun effet : pour changer de marque, il faut reconstruire l'image.
+- **Aucun secret, aucune variable obligatoire** à l'exécution (`PORT=3000` et `HOSTNAME=0.0.0.0` sont déjà fixés dans l'image).
+- L'image `runner` copie `public/`, `.next/standalone/` et `.next/static/` (les deux derniers à la racine `/app` et `/app/.next/static`),
+  tourne avec l'utilisateur non-root `node` et expose le port **3000** (`CMD ["node", "server.js"]`).
+- **`GET /api/health`** renvoie `200` avec `{"status":"ok","theme":"..."}` (sans cache, sans donnée) : à utiliser comme sonde de santé du
+  conteneur ou du reverse proxy. Exemple : `HEALTHCHECK CMD wget -qO- http://localhost:3000/api/health || exit 1`.
+- `.dockerignore` exclut `node_modules`, `.next`, `.git` et les fichiers `.env*` (sauf `.env.example`).
+- L'état du site est en mémoire : plusieurs instances derrière un load balancer n'ont pas besoin de session partagée, mais chaque rechargement
+  repart des données de démonstration.
+
+**Vérification faite sans Docker** (indisponible dans l'environnement de développement cloud) : la structure de l'étape `runner` a été
+reproduite à l'identique (mêmes `COPY` dans un dossier vide, sans le `node_modules` du dépôt, mêmes variables, `node server.js`) pour les deux thèmes ;
+`/`, `/reserver`, `/admin`, `/admin/reservations`, `/api/health`, `/robots.txt`, le CSS statique et `next/image` (module `sharp`, variantes musl
+incluses) répondent `200`, une route inconnue `404`, et `/admin/planning` / `/admin/clients` répondent `200` (Mahaza) ou `404` (St Louis).
+**Le `docker build` lui-même n'a pas été exécuté** : à faire une fois sur une machine avec Docker.
+
 ## Palette Mahaza (WCAG AA)
 
 Dérivée du logo (or `#E9B93C`, gris charbon), de la fleur (saumon `#DE968D`) et des visuels (serviette ocre, crème). Aucun jeton de
@@ -170,6 +201,8 @@ Tout le code premium vit dans `components/mahaza/`, `lib/mahaza/` et `data/mahaz
 (`components/booking`, `components/admin`, `components/ui`, en-tête / pied de page, `lib/store.tsx`, `app/globals.css`) ne sont pas modifiés ;
 `app/**` n'aiguille que par `theme.id`. La police et le CSS premium ne sont importés qu'en build Mahaza, et Tailwind n'analyse pas
 `components/mahaza/` en build St Louis. `/admin/planning` et `/admin/clients` répondent 404 sous St Louis.
+
+La route `/api/health` est commune aux deux thèmes (elle ne produit aucun HTML prérendu) ; les pages St Louis restent identiques.
 
 Vérification : build St Louis avant / après, comparaison du HTML et des flux RSC prérendus (seuls le buildId, les noms de fichiers hachés
 et les identifiants de modules webpack sont normalisés) et des déclarations CSS de toutes les classes utilisées par St Louis.
