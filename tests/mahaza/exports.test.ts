@@ -3,6 +3,7 @@ import { theme } from "@/theme.config";
 import { buildIcs, escapeIcsText, foldLine, toIcsUtc } from "@/lib/mahaza/ics";
 import { csvCell, reservationsToCsv, toCsv } from "@/lib/mahaza/csv";
 import { reminderLink, reminderMessage } from "@/lib/mahaza/reminders";
+import { confirmationMessage } from "@/lib/mahaza/messages";
 import { generateGiftCode, giftCardMessage, giftCardWaLink, validateGiftAmount } from "@/lib/mahaza/gift-card";
 import { cartDurationLabel, cartTotalDuration } from "@/lib/mahaza/cart";
 import { loyaltyFor } from "@/lib/mahaza/loyalty";
@@ -142,5 +143,16 @@ describe("panier, fidélité, téléphone", () => {
   it("rapproche un numéro malgré indicatif et espaces", () => {
     expect(phoneKey("+237 6 70 00 00 01")).toBe(phoneKey("670000001"));
     expect(phoneKey("6 70 00 00 01")).toBe("670000001");
+  });
+});
+
+describe("message de confirmation WhatsApp", () => {
+  it("liste chaque soin avec praticien et salle, la référence et l'acompte", () => {
+    const msg = confirmationMessage(two, { brand: "Mahaza Beauty", siteName: "Douala Bonapriso", momoNumber: "6 00 00 00 00", services: theme.services, staff: theme.practitioners, rooms: theme.rooms });
+    expect(msg).toContain("(Douala Bonapriso)");
+    expect(msg).toContain("• 10:00 – 11:00 : Soin éclat");
+    expect(msg).toContain("• 11:00 – 12:00 : Manucure spa");
+    expect(msg).toContain("MAH-T001");
+    expect(msg).toContain("6 00 00 00 00");
   });
 });
