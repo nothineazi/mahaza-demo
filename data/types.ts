@@ -20,6 +20,8 @@ export interface Site {
   address: string;
   /** Acompte forfaitaire en FCFA. FICTIF (placeholder de démo), configurable par site. */
   depositAmount?: number;
+  /** Délai (minutes) avant annulation du créneau si l'acompte n'est pas reçu. FICTIF ; surcharge `PremiumConfig.depositHoldMin`. */
+  depositHoldMin?: number;
 }
 
 export interface Practitioner {
@@ -78,6 +80,80 @@ export interface Booking {
   customerPhone: string;
   depositAmount: number;
   depositReceived: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Thème Mahaza « premium » : réservations multi-soins, cycle de vie, clients.
+// Types uniquement (effacés à la compilation) : le thème St Louis n'est pas concerné.
+// ---------------------------------------------------------------------------
+
+export type BookingStatus = "pending_deposit" | "confirmed" | "completed" | "cancelled" | "no_show";
+
+/** Un soin d'une réservation. Les lignes d'une même réservation s'enchaînent sans interruption. */
+export interface ReservationLine {
+  serviceId: string;
+  practitionerId: string;
+  roomId: string;
+  /** HH:mm */
+  start: string;
+  /** Durée du créneau : durée du service si connue, sinon durée par défaut FICTIVE. */
+  durationMin: number;
+  /** Le client n'avait pas de préférence : le praticien a été attribué automatiquement. */
+  noPreference: boolean;
+}
+
+export interface Reservation {
+  id: string;
+  reference: string;
+  siteId: string;
+  clientId: string;
+  customerName: string;
+  customerPhone: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** Epoch ms de création. */
+  createdAt: number;
+  /** Epoch ms d'expiration de l'acompte (créneau libéré ensuite), null si sans objet. */
+  holdExpiresAt: number | null;
+  status: BookingStatus;
+  depositAmount: number;
+  lines: ReservationLine[];
+  /** Epoch ms d'ouverture du rappel WhatsApp J-1 (démo). */
+  reminderSentAt?: number;
+  source: "seed" | "web";
+  /** Donnée de démo inventée. */
+  fictive?: boolean;
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  phone: string;
+  homeSiteId: string;
+  notes: string;
+  /** Points de fidélité bonus (FICTIF), en plus des visites terminées. */
+  bonusPoints: number;
+  /** Donnée de démo inventée. */
+  fictive?: boolean;
+}
+
+export interface LoyaltyTier {
+  label: string;
+  minPoints: number;
+}
+
+/** Réglages du thème premium (Mahaza). Toutes les valeurs sont FICTIVES et configurables. */
+export interface PremiumConfig {
+  /** Délai d'expiration de l'acompte, en minutes (FICTIF). */
+  depositHoldMin: number;
+  /** Nombre maximal de soins dans une réservation. */
+  maxCartItems: number;
+  /** Délai long appliqué aux acomptes en attente des réservations seed (FICTIF), en minutes. */
+  seedHoldMin: number;
+  loyalty: { pointsPerVisit: number; tiers: LoyaltyTier[] };
+  /** FICTIF : barème par catégorie, utilisé uniquement pour le CA estimé du back-office. */
+  fictivePriceByCategory: Record<string, number>;
+  giftCard: { minAmount: number; maxAmount: number; stepAmount: number; messageMax: number };
 }
 
 export interface ThemeColors {
@@ -170,6 +246,8 @@ export interface ThemeConfig {
   practitioners: Practitioner[];
   rooms: Room[];
   seedBookings: SeedBooking[];
+  /** Réglages premium (thème Mahaza uniquement). */
+  premium?: PremiumConfig;
   /** Acompte en % du prix du service (ignoré si le site définit un acompte forfaitaire). */
   depositPercent?: number;
   momo: {

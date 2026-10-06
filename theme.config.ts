@@ -2,6 +2,7 @@ import type { ThemeConfig } from "@/data/types";
 import {
   mahazaCategories,
   mahazaPractitioners,
+  mahazaPremium,
   mahazaRooms,
   mahazaSeedBookings,
   mahazaServices,
@@ -66,9 +67,10 @@ const mahaza: ThemeConfig = {
     success: "#17703F",
     destructive: "#B42323",
   },
-  // Polices inchangées par rapport à la démo précédente.
+  // Titres : police d'affichage serif (Cormorant Garamond, via next/font : variable --font-display),
+  // avec repli Georgia si la police n'est pas chargée. Texte courant : police système.
   fonts: {
-    heading: 'Georgia, "Times New Roman", serif',
+    heading: 'var(--font-display), Georgia, "Times New Roman", serif',
     body: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   },
   radius: "0.9rem",
@@ -85,6 +87,7 @@ const mahaza: ThemeConfig = {
   practitioners: mahazaPractitioners,
   rooms: mahazaRooms,
   seedBookings: mahazaSeedBookings,
+  premium: mahazaPremium,
   defaultDurationMin: 60, // FICTIF : durées réelles inconnues
   // Acompte : forfait FICTIF par site (voir `sites[].depositAmount`), pas de pourcentage.
   momo: { merchantNumber: "6 00 00 00 00", merchantName: "MAHAZA BEAUTY (placeholder)" },
